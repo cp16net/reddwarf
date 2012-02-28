@@ -156,6 +156,7 @@ if __name__ == '__main__':
     # run its functional tests only.
     if not os.environ.get("ADD_DOMAINS", "False") == 'True':
         from tests import initialize
+        from tests.dbaas import auth
         from tests.api import flavors
         from tests.api import versions
         from tests.api import instances
@@ -183,6 +184,7 @@ if __name__ == '__main__':
         from tests import util
 
         host_ovz_groups = [
+            auth.AUTH_GROUP,
             "dbaas.guest",
             compute_reboot.GROUP,
             "dbaas.guest.dns",
