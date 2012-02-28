@@ -10,6 +10,7 @@ Vagrant::Config.run do |global_config|
       # Assign this VM to a host only network IP, allowing you to access it
       # via the IP. The IP for the volume vm is "33.33.33.10"
       config.vm.network "33.33.33.11"
+      config.vm.forward_port "http", 8080, 8000
 
       config.vm.box = "debian_squeeze_openvz"
       config.vm.box_url = @BOX_URL + "/#{config.vm.box}.box"
@@ -20,6 +21,9 @@ Vagrant::Config.run do |global_config|
       config.vm.share_folder "nova", "/src", "../../"
       if ENV['REDDWARF_AGENT']
         config.vm.share_folder "agent", "/agent", ENV['REDDWARF_AGENT']
+      end
+      if ENV['NOTIFICATIONS']
+        config.vm.share_folder "notifications", "/notifications", ENV['NOTIFICATIONS']
       end
       if ENV['REDDWARF_EXTRA']
         reddwarf_extra_dir = ENV['REDDWARF_EXTRA']
