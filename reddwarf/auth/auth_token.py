@@ -217,13 +217,17 @@ class AuthProtocol(object):
                 if response.status == 302:
                     # Can be ignored because the service relies on basic auth
                     return ""
-                raise exception.Unauthorized("Error authenticating service")
+                msg = "Error authenticating service with user(%s)" % username
+                LOG.debug(msg)
+                raise exception.Unauthorized(msg)
             else:
                 body = json.loads(data)
                 admin_token = body['auth']['token']['id']
                 return admin_token
         except:
-            raise exception.Unauthorized("Error authenticating service")
+            msg = "Error authenticating service with user(%s)" % username
+            LOG.debug(msg)
+            raise exception.Unauthorized(msg)
 
     def _reject_request(self, env, start_response):
         """Redirect client to auth server"""
