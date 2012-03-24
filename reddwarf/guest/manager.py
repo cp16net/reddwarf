@@ -61,6 +61,7 @@ class GuestManager(manager.Manager):
             msg = "An issue occurred instantiating the GuestDriver as the " \
                   "following classes: " + str(classes) + \
                   " Exception=" + str(te)
+            LOG.debug(msg)
             raise TypeError(msg)
         super(GuestManager, self).__init__(*args, **kwargs)
 

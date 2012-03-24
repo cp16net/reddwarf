@@ -97,17 +97,26 @@ class PkgAgent(object):
                               "is already the newest version"],
                              timeout=time_out)
             if i == 0:
-                raise PkgPermissionError("Invalid permissions.")
+                msg = "Invalid permissions."
+                LOG.debug(msg)
+                raise PkgPermissionError(msg)
             elif i == 1 or i == 2:
-                raise PkgNotFoundError("Could not find apt %s" % package_name)
+                msg = "Could not find apt %s" % package_name
+                LOG.debug(msg)
+                raise PkgNotFoundError(msg)
             elif i == 3:
                 return RUN_DPKG_FIRST
             elif i == 4:
+                msg = ("Something happened installing (package_name=%s)"
+                       " with a expect code of 4" % package_name)
+                LOG.debug(msg)
                 raise PkgAdminLockError()
             wait_and_close_proc(child)
         except pexpect.TIMEOUT:
             kill_proc(child)
-            raise PkgTimeout("Process timeout after %i seconds." % time_out)
+            msg = "Process timeout after %i seconds." % time_out
+            LOG.debug(msg)
+            raise PkgTimeout(msg)
         return OK
 
     def _remove(self, package_name, time_out):
@@ -133,19 +142,28 @@ class PkgAgent(object):
                               "Removing %s*" % package_name],
                              timeout=time_out)
             if i == 0:
-                raise PkgPermissionError("Invalid permissions.")
+                msg = "Invalid permissions."
+                LOG.debug(msg)
+                raise PkgPermissionError(msg)
             elif i == 1:
-                raise PkgNotFoundError("Could not find pkg %s" % package_name)
+                msg = "Could not find pkg %s" % package_name
+                LOG.debug(msg)
+                raise PkgNotFoundError(msg)
             elif i == 2 or i == 3:
                 return REINSTALL_FIRST
             elif i == 4:
                 return RUN_DPKG_FIRST
             elif i == 5:
+                msg = ("Something happened removing (package_name=%s)"
+                       " with a expect code of 5" % package_name)
+                LOG.debug(msg)
                 raise PkgAdminLockError()
             wait_and_close_proc(child)
         except pexpect.TIMEOUT:
             kill_proc(child)
-            raise PkgTimeout("Process timeout after %i seconds." % time_out)
+            msg = "Process timeout after %i seconds." % time_out
+            LOG.debug(msg)
+            raise PkgTimeout(msg)
         return OK
 
     def pkg_install(self, package_name, time_out):
@@ -156,8 +174,9 @@ class PkgAgent(object):
                 self._fix(time_out)
             result = self._install(package_name, time_out)
             if result != OK:
-                raise PkgPackageStateError("Package %s is in a bad state."
-                                           % package_name)
+                msg = "Package %s is in a bad state." % package_name
+                LOG.debug(msg)
+                raise PkgPackageStateError(msg)
 
     def pkg_version(self, package_name):
         """Returns the installed version of the given package.
@@ -186,11 +205,17 @@ class PkgAgent(object):
             wait_and_close_proc(child)
         except pexpect.TIMEOUT:
             kill_proc(child)
-            raise PkgTimeout("Remove process took too long.")
+            msg = "Remove process took too long."
+            LOG.debug(msg)
+            raise PkgTimeout(msg)
         if len(parts) <= 2:
-            raise Error("Unexpected output.")
+            msg = "Unexpected output."
+            LOG.debug(msg)
+            raise Error(msg)
         if parts[1] != package_name:
-            raise Error("Unexpected output:[1] == " + str(parts[1]))
+            msg = "Unexpected output:[1] == " + str(parts[1])
+            LOG.debug(msg)
+            raise Error(msg)
         if parts[0] == 'un' or parts[2] == '<none>':
             return None
         return parts[2]
@@ -208,5 +233,6 @@ class PkgAgent(object):
                 self._fix(time_out)
             result = self._remove(package_name, time_out)
             if result != OK:
-                raise PkgPackageStateError("Package %s is in a bad state."
-                                           % package_name)
+                msg = "Package %s is in a bad state." % package_name
+                LOG.debug(msg)
+                raise PkgPackageStateError(msg)

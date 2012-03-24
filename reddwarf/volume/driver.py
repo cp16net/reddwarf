@@ -89,6 +89,8 @@ class ReddwarfVolumeDriver(nova_driver.VolumeDriver):
         i = child.expect(['UUID="([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-'
                           '[0-9a-f]{4}-[0-9a-f]{12})"', pexpect.EOF])
         if i > 0:
+            msg = "Could not get a UUID from device path %(device_path)."
+            LOG.debug(msg % locals())
             raise exception.DevicePathInvalidForUuid(device_path=device_path)
         return child.match.groups()[0]
 
@@ -107,6 +109,8 @@ class ReddwarfVolumeDriver(nova_driver.VolumeDriver):
             utils.execute('sudo', 'blockdev', '--getsize64', device_path,
                           attempts=FLAGS.num_tries)
         except nova_exception.ProcessExecutionError:
+            msg = "The supplied device path (%(path)s) is invalid."
+            LOG.debug(msg % locals())
             raise nova_exception.InvalidDevicePath(path=device_path)
 
     def _check_format(self, device_path):
@@ -116,10 +120,14 @@ class ReddwarfVolumeDriver(nova_driver.VolumeDriver):
             i = child.expect(['has_journal', 'Wrong magic number'])
             if i == 0:
                 return
-            raise IOError('Device path at %s did not seem to be %s.' %
-                          (device_path, FLAGS.volume_fstype))
+            msg = ('Device path at %s did not seem to be %s.' %
+                   (device_path, FLAGS.volume_fstype))
+            LOG.debug(msg)
+            raise IOError(msg)
         except pexpect.EOF:
-            raise IOError("Volume was not formatted.")
+            msg = "Volume was not formatted."
+            LOG.debug(msg)
+            raise IOError(msg)
         child.expect(pexpect.EOF)
 
     def _format(self, device_path):
@@ -257,6 +265,7 @@ class ReddwarfISCSIDriver(ReddwarfVolumeDriver, nova_driver.ISCSIDriver):
                                             num_tries=FLAGS.num_tries)
         except nova_exception.ProcessExecutionError as err:
             if "15 - already exists" in err.message:
+                LOG.debug("The volume was already setup.")
                 raise exception.VolumeAlreadyDiscovered()
             LOG.error(err)
             raise nova_exception.Error(_("iSCSI device %s not found") %

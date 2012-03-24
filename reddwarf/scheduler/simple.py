@@ -20,6 +20,7 @@
 """
 Simple Scheduler
 """
+from doc.ext.nova_todo import _
 
 from nova import db
 from nova import flags
@@ -65,7 +66,9 @@ class SimpleScheduler(chance.ChanceScheduler):
         service = db.service_get_by_args(context.elevated(), host,
                                          'nova-compute')
         if not self.service_is_up(service):
-            raise driver.WillNotSchedule(_("Host %s is not alive") % host)
+            msg = _("Host %s is not alive") % host
+            LOG.debug(msg)
+            raise driver.WillNotSchedule(msg)
         return self._schedule_now_on_host(context, host, instance_ref['id'])
 
     def _schedule_based_on_resources(self, context, instance_ref):
@@ -73,15 +76,19 @@ class SimpleScheduler(chance.ChanceScheduler):
         for result in results:
             (service, instance_cores) = result
             if instance_cores + instance_ref['vcpus'] > FLAGS.max_cores:
-                raise driver.NoValidHost(_("All hosts have too many cores"))
+                msg = _("All hosts have too many cores")
+                LOG.debug(msg)
+                raise driver.NoValidHost(msg)
             if self.service_is_up(service):
                 # NOTE(vish): this probably belongs in the manager, if we
                 #             can generalize this somehow
                 return self._schedule_now_on_host(context, service['host'],
                                                   instance_ref['id'])
-        raise driver.NoValidHost(_("Scheduler was unable to locate a host"
-                                   " for this request. Is the appropriate"
-                                   " service running?"))
+        msg = _("Scheduler was unable to locate a host"
+                    " for this request. Is the appropriate"
+                    " service running?")
+        LOG.debug(msg)
+        raise driver.NoValidHost(msg)
 
     def schedule_run_instance(self, context, instance_id, *_args, **_kwargs):
         return self._schedule_instance(context, instance_id, *_args, **_kwargs)
@@ -118,7 +125,9 @@ class SimpleScheduler(chance.ChanceScheduler):
             service = db.service_get_by_args(context.elevated(), host,
                                              'nova-volume')
             if not self.service_is_up(service):
-                raise driver.WillNotSchedule(_("Host %s not available") % host)
+                msg = _("Host %s not available") % host
+                LOG.debug(msg)
+                raise driver.WillNotSchedule(msg)
 
             # TODO(vish): this probably belongs in the manager, if we
             #             can generalize this somehow
@@ -130,8 +139,10 @@ class SimpleScheduler(chance.ChanceScheduler):
         for result in results:
             (service, volume_gigabytes) = result
             if volume_gigabytes + volume_ref['size'] > FLAGS.max_gigabytes:
-                raise driver.NoValidHost(_("All hosts have too many "
-                                           "gigabytes"))
+                msg = _("All hosts have too many "
+                            "gigabytes")
+                LOG.debug(msg)
+                raise driver.NoValidHost(msg)
             if self.service_is_up(service):
                 # NOTE(vish): this probably belongs in the manager, if we
                 #             can generalize this somehow
@@ -141,9 +152,11 @@ class SimpleScheduler(chance.ChanceScheduler):
                                  {'host': service['host'],
                                   'scheduled_at': now})
                 return service['host']
-        raise driver.NoValidHost(_("Scheduler was unable to locate a host"
-                                   " for this request. Is the appropriate"
-                                   " service running?"))
+        msg = _("Scheduler was unable to locate a host"
+                    " for this request. Is the appropriate"
+                    " service running?")
+        LOG.debug(msg)
+        raise driver.NoValidHost(msg)
 
     def schedule_set_network_host(self, context, *_args, **_kwargs):
         """Picks a host that is up and has the fewest networks."""
@@ -152,12 +165,16 @@ class SimpleScheduler(chance.ChanceScheduler):
         for result in results:
             (service, instance_count) = result
             if instance_count >= FLAGS.max_networks:
-                raise driver.NoValidHost(_("All hosts have too many networks"))
+                msg = _("All hosts have too many networks")
+                LOG.debug(msg)
+                raise driver.NoValidHost(msg)
             if self.service_is_up(service):
                 return service['host']
-        raise driver.NoValidHost(_("Scheduler was unable to locate a host"
-                                   " for this request. Is the appropriate"
-                                   " service running?"))
+        msg = _("Scheduler was unable to locate a host"
+                    " for this request. Is the appropriate"
+                    " service running?")
+        LOG.debug(msg)
+        raise driver.NoValidHost(msg)
 
 
 class MemoryScheduler(SimpleScheduler):
@@ -175,7 +192,9 @@ class MemoryScheduler(SimpleScheduler):
                 return self._schedule_now_on_host(context, service['host'],
                                                   instance_ref['id'])
         LOG.debug("Error scheduling %s" % instance_ref['display_name'])
-        raise driver.NoValidHost(_("Insufficient memory on all hosts."))
+        msg = _("Insufficient memory on all hosts.")
+        LOG.debug(msg)
+        raise driver.NoValidHost(msg)
 
 
 class UnforgivingMemoryScheduler(MemoryScheduler):
@@ -202,4 +221,7 @@ class UnforgivingMemoryScheduler(MemoryScheduler):
             notifier.notify(publisher_id(), 'out.of.instance.memory',
                             notifier.ERROR,
                             {"requested_instance_memory_mb": memory_mb})
+            msg = ("Scheduler unable to find a host with memory left for an "
+                   "instance needing %(instance_memory_mb)s MB of RAM.")
+            LOG.debug(msg % locals())
             raise OutOfInstanceMemory(instance_memory_mb=memory_mb)

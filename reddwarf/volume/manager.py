@@ -62,6 +62,8 @@ class ReddwarfVolumeManager(manager.VolumeManager):
             LOG.error(_("Cannot allocate requested volume size. "
                         "requested size: %(size)sG") % locals())
             self.db.volume_update(context, volume_id, {'status': 'error'})
+            LOG.debug("An error occured provisioning volume %(volume_id)s."
+                       % locals())
             raise exception.VolumeProvisioningError(volume_id=volume_id)
 
     def assign_volume(self, context, volume_id, host):
@@ -123,4 +125,6 @@ class ReddwarfVolumeManager(manager.VolumeManager):
                             'volume.resize.resize',
                             notifier.ERROR,
                             "Error re-sizing volume %s" % volume_id)
+            LOG.debug("An error occured provisioning volume %(volume_id)s."
+                       % locals())
             raise exception.VolumeProvisioningError(volume_id=volume_id)

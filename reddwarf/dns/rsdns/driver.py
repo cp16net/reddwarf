@@ -81,7 +81,9 @@ class EntryToRecordConverter(object):
 def create_client_with_flag_values():
     """Creates a RS DNSaaS client using the Flag values."""
     if FLAGS.dns_management_base_url == None:
-        raise RuntimeError("Missing flag value for dns_management_base_url.")
+        msg = "Missing flag value for dns_management_base_url."
+        LOG.debug(msg)
+        raise RuntimeError(msg)
     return DNSaas(FLAGS.dns_account_id, FLAGS.dns_username, FLAGS.dns_passkey,
                   auth_url=FLAGS.dns_auth_url,
                   management_base_url=FLAGS.dns_management_base_url)
@@ -119,13 +121,17 @@ class RsDnsDriver(object):
         self.default_dns_zone = RsDnsZone(id=FLAGS.dns_domain_id, name=FLAGS.dns_domain_name)
         self.converter = EntryToRecordConverter(self.default_dns_zone)
         if FLAGS.dns_ttl < 300:
-            raise Exception("TTL value '--dns_ttl=%s' should be greater than" \
-                            " 300" % FLAGS.dns_ttl)
+            msg = ("TTL value '--dns_ttl=%s' should be greater "
+                   "than 300" % FLAGS.dns_ttl)
+            LOG.debug(msg)
+            raise Exception(msg)
 
     def create_entry(self, entry):
         dns_zone = entry.dns_zone or self.default_dns_zone
         if dns_zone.id == None:
-            raise TypeError("The entry's dns_zone must have an ID specified.")
+            msg = "The entry's dns_zone must have an ID specified."
+            LOG.debug(msg)
+            raise TypeError(msg)
         name = entry.name  # + "." + dns_zone.name
         LOG.debug("Going to create RSDNS entry %s." % name)
         try:
@@ -138,7 +144,9 @@ class RsDnsDriver(object):
                 poll_until(lambda : future.ready, sleep_time=2,
                                  time_out=60*2)
                 if len(future.resource) < 1:
-                    raise RsDnsError("No DNS records were created.")
+                    msg = "No DNS records were created."
+                    LOG.debug(msg)
+                    raise RsDnsError(msg)
                 elif len(future.resource) > 1:
                     LOG.error("More than one DNS record created. Ignoring.")
                 actual_record = future.resource[0]
@@ -191,10 +199,14 @@ class RsDnsDriver(object):
                 for domain in domains]
 
     def modify_content(self, *args, **kwargs):
-        raise NotImplementedError("Not implemented for RS DNS.")
+        msg = "Not implemented for RS DNS."
+        LOG.debug(msg)
+        raise NotImplementedError(msg)
 
     def rename_entry(self, *args, **kwargs):
-        raise NotImplementedError("Not implemented for RS DNS.")
+        msg = "Not implemented for RS DNS."
+        LOG.debug(msg)
+        raise NotImplementedError(msg)
 
 
 class RsDnsInstanceEntryFactory(object):

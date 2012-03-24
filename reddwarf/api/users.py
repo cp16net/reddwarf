@@ -42,6 +42,7 @@ class Controller(object):
         super(Controller, self).__init__()
 
     def show(self, req, instance_id, id):
+        LOG.debug("The show method for users is not implemented")
         raise exception.NotImplemented()
     
     def index(self, req, instance_id):
@@ -103,18 +104,23 @@ class Controller(object):
     def _validate(self, body):
         """Validate that the request has all the required parameters"""
         if not body:
-            raise exception.BadRequest("The request contains an empty body")
+            msg = "The request contains an empty body"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
         if not body.get('users', ''):
-            raise exception.BadRequest("Required element/key 'users' was not "
-                                       "specified")
+            msg = "Required element/key 'users' was not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         for user in body.get('users'):
             if not user.get('name'):
-                raise exception.BadRequest("Required attribute/key 'name' was "
-                                           "not specified")
+                msg = "Required attribute/key 'name' was not specified"
+                LOG.debug(msg)
+                raise exception.BadRequest(msg)
             if not user.get('password'):
-                raise exception.BadRequest("Required attribute/key 'password' "
-                                           "was not specified")
+                msg = "Required attribute/key 'password' was not specified"
+                LOG.debug(msg)
+                raise exception.BadRequest(msg)
 
 
 def create_resource(version='1.0'):

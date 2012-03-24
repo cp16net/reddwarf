@@ -38,7 +38,7 @@ from reddwarf.api import users
 from reddwarf.api import flavors
 from reddwarf.api import versions
 
-LOG = logging.getLogger('reddwarf.api')
+LOG = logging.getLogger(__name__)
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('default_guest_mysql_port', 3306,

@@ -18,6 +18,11 @@ import sys
 from migrate.versioning import api as versioning_api
 
 from nova import flags
+from nova import log
+
+
+LOG = log.getLogger(__name__)
+
 
 try:
     from migrate.versioning import exceptions as versioning_exceptions
@@ -63,7 +68,9 @@ def db_upgrade(version):
                                version=version)
         return db_version()
     except (ValueError, KeyError):
-        raise  ValueError("Invalid version '%s'" % version)
+        msg = "Invalid version '%s'" % version
+        LOG.debug(msg)
+        raise  ValueError(msg)
 
 
 def db_downgrade(version):
@@ -77,7 +84,9 @@ def db_downgrade(version):
                                  version=version)
         return db_version()
     except (ValueError, KeyError):
-        raise  ValueError("Invalid version '%s'" % version)
+        msg = "Invalid version '%s'" % version
+        LOG.debug(msg)
+        raise  ValueError(msg)
 
 
 def version_control():

@@ -41,6 +41,7 @@ class Controller(object):
         super(Controller, self).__init__()
 
     def show(self, req, instance_id, id):
+        LOG.debug("Database show method is not implemented")
         raise exception.NotImplemented()
 
     def index(self, req, instance_id):
@@ -99,15 +100,19 @@ class Controller(object):
     def _validate(self, body):
         """Validate that the request has all the required parameters"""
         if not body:
-            raise exception.BadRequest("The request contains an empty body")
+            msg = "The request contains an empty body"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
         if not body.get('databases', ''):
-            raise exception.BadRequest("Required element/key 'databases' was "
-                                       "not specified")
+            msg = "Required element/key 'databases' was not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         for database in body.get('databases'):
             if not database.get('name', ''):
-                raise exception.BadRequest("Required attribute/key 'name' was "
-                                           "not specified")
+                msg = "Required attribute/key 'name' was not specified"
+                LOG.debug(msg)
+                raise exception.BadRequest(msg)
 
 
 def create_resource(version='1.0'):

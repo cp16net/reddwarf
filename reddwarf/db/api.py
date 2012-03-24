@@ -77,6 +77,7 @@ def guest_status_get(instance_id, session=None):
                          filter_by(deleted=False).\
                          first()
     if not result:
+        LOG.error("Instance id (%s) was not found" % instance_id)
         raise nova_exception.InstanceNotFound(instance_id=instance_id)
     return result
 
@@ -93,6 +94,7 @@ def guest_status_get_list(instance_ids, session=None):
                          filter(models.GuestStatus.instance_id.in_(ids)).\
                          filter_by(deleted=False)
     if not result:
+        LOG.error("Instance ids (%s) were not found" % instance_ids)
         raise nova_exception.InstanceNotFound(instance_id=instance_ids)
     return result
 
@@ -138,6 +140,7 @@ def show_instances_on_host(context, id):
                         filter_by(deleted=False).\
                         filter_by(disabled=False).count()
         if not count:
+            LOG.error("Host id (%s) was not found" % id)
             raise nova_exception.HostNotFound(host=id)
         result = session.query(Instance).\
                         filter_by(host=id).\
@@ -201,6 +204,7 @@ def show_instances_by_account(context, id):
                         filter_by(user_id=id).\
                         filter_by(deleted=False).\
                         order_by(Instance.host).all()
+    LOG.error("User id (%s) was not found" % id)
     raise nova_exception.UserNotFound(user_id=id)
 
 
@@ -282,6 +286,7 @@ def config_create(key, value=None, description=None):
             config.save(session=session)
         return config
     except Exception:
+        LOG.error("Found a duplicate config key (%s)" % key)
         raise exception.DuplicateConfigEntry(key=key)
 
 
@@ -298,6 +303,7 @@ def config_get(key, session=None):
                          filter_by(deleted=False).\
                          first()
     if not result:
+        LOG.error("Config key (%s) was not found" % key)
         raise exception.ConfigNotFound(key=key)
     return result
 
@@ -312,6 +318,7 @@ def config_get_all(session=None):
     result = session.query(models.Config).\
                          filter_by(deleted=False)
     if not result:
+        LOG.error("No Config values were not found")
         raise exception.ConfigNotFound(key="All config values")
     return result
 
@@ -377,6 +384,9 @@ def rsdns_record_create(name, id):
             record.save(session=session)
         return record
     except DBError:
+        msg = ("Duplicate rsdns record attempted to be created"
+               "(id=%s, name=%s)." % (id, name))
+        LOG.error(msg)
         raise exception.DuplicateRecordEntry(name=name, id=id)
 
 
@@ -391,6 +401,8 @@ def rsdns_record_get(name):
                          filter_by(deleted=False).\
                          first()
     if not result:
+        msg = ("rsdns record not found (name=%s)." % name)
+        LOG.error(msg)
         raise exception.RsDnsRecordNotFound(name=name)
     return result
 
@@ -416,6 +428,8 @@ def rsdns_record_list():
         session = get_session()
     result = session.query(models.RsDnsRecord)
     if not result:
+        msg = ("rsdns record not found (name=%s)." % name)
+        LOG.error(msg)
         raise exception.RsDnsRecordNotFound(name=name)
     return result
 
@@ -455,6 +469,8 @@ def fixed_ip_get_by_instance_for_network(context, instance_id, bridge_name):
                        filter_by(bridge=bridge_name).\
                        all()
     if not rv:
+        msg = "Instance '%(instance_id)s' has zero fixed ips." % locals()
+        LOG.debug(msg)
         raise nova_exception.FixedIpNotFoundForInstance(instance_id=instance_id)
     return rv
 

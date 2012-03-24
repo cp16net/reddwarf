@@ -17,7 +17,7 @@ from sqlalchemy import *
 from migrate import *
 from nova import log as logging
 
-
+LOG = logging.getLogger(__name__)
 meta = MetaData()
 
 
@@ -86,6 +86,6 @@ def _modify(migrate_engine, new_instances):
             'local_gb': values["local_gb"],
             'flavorid': values["flavorid"]})
     except Exception:
-        logging.info(repr(instance_types))
-        logging.exception('Exception while seeding instance_types table')
+        LOG.info(repr(instance_types))
+        LOG.exception('Exception while seeding instance_types table')
         raise

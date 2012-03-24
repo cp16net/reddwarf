@@ -73,6 +73,8 @@ class Controller(object):
                              'usedRAM': int(used_ram),
                              'instances': instances}}
         except nova_exception.HostNotFound:
+            msg = "The host(%s) was not found"
+            LOG.debug(msg)
             raise exception.NotFound()
 
 

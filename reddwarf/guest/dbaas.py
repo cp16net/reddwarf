@@ -261,7 +261,9 @@ class DBaaSAgent(object):
         PREPARING = True
         from reddwarf.guest.pkg import PkgAgent
         if not isinstance(self, PkgAgent):
-            raise TypeError("This must also be an instance of Pkg agent.")
+            msg = "This must also be an instance of Pkg agent."
+            LOG.debug(msg)
+            raise TypeError(msg)
         preparer = DBaaSPreparer(self)
         preparer.prepare()
         self.create_database(databases)
@@ -325,6 +327,7 @@ class LocalSqlClient(object):
         except:
             self.trans.rollback()
             self.trans = None
+            LOG.debug("LocalSqlClient exception raised on execute")
             raise
 
 
@@ -343,7 +346,10 @@ class KeepAliveConnection(interfaces.PoolListener):
             except TypeError:
                 dbapi_con.ping()
         except dbapi_con.OperationalError, ex:
+            LOG.exception(ex)
             if ex.args[0] in (2006, 2013, 2014, 2045, 2055):
+                msg = "Changed exception to DisconnectionError being raised"
+                LOG.debug(msg)
                 raise exc.DisconnectionError()
             else:
                 raise

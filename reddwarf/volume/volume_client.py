@@ -77,6 +77,8 @@ class VolumeClient(Base):
             try:
                 path = self.driver.discover_volume(context, volume_ref)
             except VolumeAlreadyDiscovered:
+                msg = "The volume was already setup."
+                LOG.debug(msg)
                 raise VolumeAlreadySetup()
         self._ensure_path_appears(path, volume_id)
         return path

@@ -250,8 +250,11 @@ class Controller(object):
         ctxt = req.environ['nova.context']
         try:
             common.instance_exists(ctxt, id, self.compute_api)
-        except nova_exception.NotFound:
+        except nova_exception.NotFound, e:
             # Reddwarf NotFound bears an HTTP 404 response payload.
+            LOG.error(e.message)
+            msg = "Mgmt API did not find this (id=%s)" % id
+            LOG.debug(msg)
             raise exception.NotFound()
 
         _actions = {
@@ -264,9 +267,11 @@ class Controller(object):
                 return _actions[key](body, req, id)
             else:
                 msg = _("There is no such server action: %s") % (key,)
+                LOG.debug(msg)
                 raise exception.BadRequest(msg)
 
         msg = _("Invalid request body")
+        LOG.debug(msg)
         raise exception.BadRequest(msg)
 
     def _action_reboot(self, body, req, id):

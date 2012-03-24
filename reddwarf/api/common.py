@@ -27,7 +27,7 @@ from reddwarf.guest.db import models
 
 
 XML_NS_V10 = 'http://docs.openstack.org/database/api/v1.0'
-LOG = logging.getLogger('reddwarf.api.common')
+LOG = logging.getLogger(__name__)
 
 dbaas_mapping = {
     None: 'BUILD',
@@ -60,6 +60,7 @@ def populate_databases(dbs):
             databases.append(mydb.serialize())
         return databases
     except ValueError as ve:
+        LOG.debug(ve.message)
         raise exception.BadRequest(ve.message)
 
 
@@ -78,6 +79,7 @@ def populate_users(users):
             users_data.append(u.serialize())
         return users_data
     except ValueError as ve:
+        LOG.debug(ve.message)
         raise exception.BadRequest(ve.message)
 
 
@@ -86,6 +88,7 @@ def instance_exists(ctxt, id, compute_api):
     try:
         return compute_api.get(ctxt, id)
     except nova_exception.NotFound:
+        LOG.debug("Instance id(%s) was not found" % id)
         raise exception.NotFound()
 
 def instance_available(ctxt, instance_id, local_id, compute_api):
@@ -106,14 +109,22 @@ def verify_admin_context(f):
     """
     def wrapper(*args, **kwargs):
         if not 'req' in kwargs:
-          raise nova_exception.Error("Need a reddwarf request to extract the context.")
+          msg = "Need a reddwarf request to extract the context."
+          LOG.debug(msg)
+          raise nova_exception.Error(msg)
         req = kwargs['req']
         if not hasattr(req, 'environ'):
-          raise nova_exception.Error("Request needs an environment to extract the context.")
+          msg = "Request needs an environment to extract the context."
+          LOG.debug(msg)
+          raise nova_exception.Error(msg)
         context = req.environ.get('nova.context', None)
         if context is None:
-          raise nova_exception.Error("Request context is None; cannot verify admin access.")
+          msg = "Request context is None; cannot verify admin access."
+          LOG.debug(msg)
+          raise nova_exception.Error(msg)
         if not is_admin_context(context):
-            raise exception.Unauthorized("User does not have admin privileges.")
+            msg = "User does not have admin privileges."
+            LOG.debug(msg)
+            raise exception.Unauthorized(msg)
         return f(*args, **kwargs)
     return wrapper

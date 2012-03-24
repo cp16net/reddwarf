@@ -23,8 +23,7 @@ from reddwarf.api import common
 from reddwarf import exception
 from reddwarf.db import api as dbapi
 
-LOG = logging.getLogger('reddwarf.api.accounts')
-LOG.setLevel(logging.DEBUG)
+LOG = logging.getLogger(__name__)
 
 
 FLAGS = flags.FLAGS
@@ -112,4 +111,6 @@ class Controller(object):
             LOG.debug("resp - %s", resp)
             return resp
         except (nova_exception.NotFound, nova_exception.UserNotFound) as ex:
+            msg = "Account not found (id=%s)" % id
+            LOG.debug(msg)
             raise exception.NotFound()

@@ -26,6 +26,7 @@ import pexpect
 import random
 from eventlet import greenthread
 from eventlet import pools
+from doc.ext.nova_todo import _
 
 from nova import exception as nova_exception
 from nova import flags
@@ -79,7 +80,9 @@ class SSHPool(pools.Pool):
                             pkey=privatekey,
                             timeout=FLAGS.ssh_conn_timeout)
             else:
-                raise nova_exception.Error(_("Specify san_password or san_privatekey"))
+                msg = _("Specify san_password or san_privatekey")
+                LOG.debug(msg)
+                raise nova_exception.Error(msg)
             # Paramiko by default sets the socket timeout to 0.1 seconds,
             # ignoring what we set thru the sshclient. This doesn't help for
             # keeping long lived connections. Hence we have to bypass it, by
@@ -142,9 +145,11 @@ class ReddwarfSanISCSIDriver(ReddwarfISCSIDriver, nova_san.SanISCSIDriver):
                     except Exception as e:
                         LOG.error(e)
                         greenthread.sleep(random.randint(20, max_sleep) / 100.0)
-                raise paramiko.SSHException("SSH Command failed after '%r' "
-                                            "attempts: '%s'"
-                                            % (total_attempts, command))
+                msg = ("SSH Command failed after '%r' "
+                       "attempts: '%s'"
+                       % (total_attempts, command))
+                LOG.debug(msg)
+                raise paramiko.SSHException(msg)
         except Exception as e:
             LOG.error(_("Error running ssh command: %s" % command))
             raise e
@@ -220,7 +225,9 @@ class ReddwarfHpSanISCSIDriver(ReddwarfSanISCSIDriver,
         cliq_args['volumeName'] = volume_ref['id']
         volume_size = int(volume_ref['size'])
         if volume_size <= 0:
-            raise ValueError("Invalid volume size.")
+            msg = "Invalid volume size."
+            LOG.debug(msg)
+            raise ValueError(msg)
         cliq_args['size'] = '%sGB' % volume_size
         cliq_args['description'] = '"%s"' % volume_ref['display_description']
 
@@ -344,6 +351,8 @@ class ReddwarfHpSanISCSIDriver(ReddwarfSanISCSIDriver,
                                     sleep_time=3,
                                     time_out=5 * FLAGS.num_tries)
         except exception.PollTimeOut:
+            msg = "Target for volume %(volume_id)s not found."
+            LOG.debug(msg % locals())
             raise exception.ISCSITargetNotDiscoverable(volume_id=volume['id'])
 
     def remove_export(self, context, volume):
@@ -364,6 +373,8 @@ class ReddwarfHpSanISCSIDriver(ReddwarfSanISCSIDriver,
         # as reported from the san is different than the nova database.
         volume_size = int(new_size)
         if volume_size <= 0:
-            raise ValueError("Invalid volume size.")
+            msg = "Invalid volume size."
+            LOG.debug(msg)
+            raise ValueError(msg)
         cliq_args['size'] = '%sGB' % volume_size
         self._cliq_run_xml("modifyVolume", cliq_args)

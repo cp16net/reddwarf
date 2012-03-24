@@ -17,12 +17,13 @@ from abc import ABCMeta
 from xml.dom import minidom
 
 from nova import flags
+from nova import log as logging
 from nova.api.openstack import wsgi
 
 from reddwarf import exception
 
 FLAGS = flags.FLAGS
-
+LOG = logging.getLogger(__name__)
 
 class XMLDeserializer(wsgi.XMLDeserializer):
     """
@@ -99,7 +100,9 @@ class XMLDeserializer(wsgi.XMLDeserializer):
         try:
             return minidom.parseString(string)
         except:
-            raise exception.BadRequest("Unable to parse the request xml.")
+            msg = "Unable to parse the request xml."
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
 class InstanceXMLDeserializer(XMLDeserializer):
     """
@@ -117,8 +120,9 @@ class InstanceXMLDeserializer(XMLDeserializer):
         instance = {}
         instance_node = self._find_first_child_named(node, "instance")
         if not instance_node:
-            raise exception.BadRequest("Required element/key 'instance' was "
-                                       "not specified")
+            msg = "Required element/key 'instance' was not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         for attr in ["name", "flavorRef"]:
             instance[attr] = instance_node.getAttribute(attr)
         #dbtype = self._extract_dbtype(instance_node)
@@ -137,7 +141,9 @@ class InstanceXMLDeserializer(XMLDeserializer):
         """Marshal the dbtype attributes of a parsed request"""
         dbtype_node = self._find_first_child_named(node, "dbtype")
         if dbtype_node is None:
-            raise exception.BadRequest("Required element 'dbtype' not specified")
+            msg = "Required element 'dbtype' not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         dbtype = {}
         for attr in ["name", "version"]:
             dbtype[attr] = dbtype_node.getAttribute(attr)
@@ -147,7 +153,9 @@ class InstanceXMLDeserializer(XMLDeserializer):
         """Marshal the volume attributes of a parsed request"""
         volume_node = self._find_first_child_named(node, "volume")
         if volume_node is None:
-            raise exception.BadRequest("Required element 'volume' not specified")
+            msg = "Required element 'volume' not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         return {"size": volume_node.getAttribute("size")}
 
 

@@ -66,6 +66,8 @@ class API(nova_volume_api.API):
                              FLAGS.volume_topic,
                              {"method": "get_storage_device_info",
                               "args": {}})
+        msg = "Get storage device information call requires Admin permission"
+        LOG.debug(msg)
         raise exception.AdminRequired()
 
     def unassign_from_compute(self, context, volume_id, host):

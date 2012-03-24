@@ -277,6 +277,7 @@ class ReddwarfComputeManager(ComputeManager):
         """
         method = 'resize_in_place'
         if not hasattr(self.driver, method):
+            LOG.error("The driver does not support the method(%s)" % method)
             raise exception.UnsupportedDriver(method=method)
 
         instance_ref = self.db.instance_get(context, instance_id)
@@ -308,12 +309,13 @@ class ReddwarfComputeManager(ComputeManager):
             err_values = { 'instance_id':instance_ref['id'],
                            'new_instance_type_id':new_instance_type_id,
                            'final_vm_state':updated_vm_state }
+            msg = _("Aborting instance %(instance_id)d resize operation.")
             notify_of_failure(context,
                               event_type='reddwarf.instance.resize_in_place_2',
                               exception=e,
-                              audit_msg=_("Aborting instance %(instance_id)d "
-                                          "resize operation."),
+                              audit_msg=msg,
                               err_values=err_values)
+            LOG.error(msg)
             raise
         finally:
             self._instance_update(context, instance_id,

@@ -142,7 +142,9 @@ class InstanceStatusLookup(object):
         originally create this InstanceStatusLookup.
         """
         if server_id not in self.local_ids:
-            raise NotFound(message="Instance %s could not be found." % server_id)
+            msg = "Instance %s could not be found." % server_id
+            LOG.debug(msg)
+            raise NotFound(message=msg)
         guest_status = self.guest_status_mapping.get(server_id)
         guest_state = None
         if guest_status is not None:

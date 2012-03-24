@@ -50,11 +50,16 @@ class API(nova_compute_api.API):
         new_size = get_memory_mb(new_instance_type_id)
         diff_size = new_size - old_size
         if diff_size == 0:
+            msg = ("Cannot resize the instance to the same size -"
+                   " old size(%s) -> new size(%s)" % (old_size, new_size))
+            LOG.error(msg)
             raise exception.CannotResizeToSameSize()
         host = instance_ref['host']
         admin_ctxt = context.get_admin_context()
         host_mem_used = dbapi.instance_get_memory_sum_by_host(admin_ctxt, host)
         if host_mem_used + diff_size > FLAGS.max_instance_memory_mb:
+            msg = "The host "
+            LOG.error(msg)
             raise reddwarf_exception.OutOfInstanceMemory()
         self.update(ctxt, instance_id, vm_state=vm_states.RESIZING)
         params={'new_instance_type_id': new_instance_type_id}
@@ -69,7 +74,9 @@ class API(nova_compute_api.API):
         ctxt = ctxt.elevated()
         instance = self.db.volume_get_instance(ctxt, volume_id)
         if not instance:
-            raise exception.Error(_("Volume isn't attached to anything!"))
+            msg = _("Volume isn't attached to anything!")
+            LOG.error(msg)
+            raise exception.Error(msg)
         self.update(ctxt,
                     instance['id'],
                     vm_state=vm_states.RESIZING,

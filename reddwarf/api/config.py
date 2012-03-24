@@ -26,7 +26,7 @@ from reddwarf.api import deserializer
 from reddwarf.db import api as dbapi
 
 
-LOG = logging.getLogger('reddwarf.api.config')
+LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
 
@@ -43,6 +43,7 @@ class Controller(object):
         try:
             config = dbapi.config_get(id)
         except exception.ConfigNotFound as cnf:
+            LOG.debug(cnf._error_string)
             raise exception.NotFound(cnf._error_string)
         return {'config': {'key': config.key, 'value': config.value,
                             'description': config.description}}
@@ -55,6 +56,7 @@ class Controller(object):
         try:
             configs_data = dbapi.config_get_all()
         except exception.ConfigNotFound as cnf:
+            LOG.debug(cnf._error_string)
             raise exception.NotFound(cnf._error_string)
         configs = []
         for config in configs_data:
@@ -83,6 +85,7 @@ class Controller(object):
                                     config.get('value', None),
                                     config.get('description', None))
         except exception.DuplicateConfigEntry as dce:
+            LOG.debug(dce._error_string)
             raise exception.InstanceFault(dce._error_string)
         return exc.HTTPOk()
 
@@ -100,27 +103,33 @@ class Controller(object):
     def _validate(self, body):
         """Validate that the request has all the required parameters"""
         if not body:
-            raise exception.BadRequest("The request contains an empty body")
+            msg = "The request contains an empty body"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
     def _validate_create(self, body):
         self._validate(body)
         if not body.get('configs', ''):
-            raise exception.BadRequest("Required element/key 'configs' was "
-                                       "not specified")
+            msg = "Required element/key 'configs' was not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         for config in body.get('configs'):
             if not config.get('key'):
-                raise exception.BadRequest("Required attribute/key 'key' was "
-                                           "not specified")
+                msg = "Required attribute/key 'key' was not specified"
+                LOG.debug(msg)
+                raise exception.BadRequest(msg)
 
     def _validate_update(self, body):
         self._validate(body)
         config = body.get('config', '')
         if not config:
-            raise exception.BadRequest("Required element/key 'config' was not "
-                                       "specified")
+            msg = "Required element/key 'config' was not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         if not config.get('key'):
-                raise exception.BadRequest("Required attribute/key 'key' was "
-                                           "not specified")
+            msg = "Required attribute/key 'key' was not specified"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
 
 def create_resource(version='1.0'):

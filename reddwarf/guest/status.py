@@ -50,6 +50,7 @@ class GuestStatus(object):
     def from_code(code):
         if code not in GuestStatus._lookup:
             msg = 'Status code %s is not a valid GuestStatus integer code.'
+            LOG.debug(msg)
             raise ValueError(msg % code)
         return GuestStatus._lookup[code]
 
@@ -59,6 +60,7 @@ class GuestStatus(object):
         status_codes = [code for (code, status) in all_items if status == desc]
         if not status_codes:
             msg = 'Status description %s is not a valid GuestStatus.'
+            LOG.debug(msg)
             raise ValueError(msg % desc)
         return GuestStatus._lookup[status_codes[0]]
 

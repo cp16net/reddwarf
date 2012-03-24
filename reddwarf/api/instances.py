@@ -90,9 +90,11 @@ class Controller(object):
                 return _actions[key](body, req, id)
             else:
                 msg = _("There is no such server action: %s") % (key,)
+                LOG.debug(msg)
                 raise exception.BadRequest(msg)
 
         msg = _("Invalid request body")
+        LOG.debug(msg)
         raise exception.BadRequest(msg)
 
     def _action_restart(self, body, req, id):
@@ -133,17 +135,21 @@ class Controller(object):
             new_flavor_id = nova_common.get_id_from_href(new_flavor_ref)
             new_instance_type_id = instance_types.get_instance_type_by_flavor_id(new_flavor_id)
         except nova_exception.FlavorNotFound:
-            raise exception.BadRequest("Required element/key - flavorRef (%s) was not found in the system" %
-                                       new_flavor_ref)
+            msg = ("Required element/key - flavorRef (%s) was not found "
+                   "in the system" % new_flavor_ref)
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         LOG.debug("the new_instance_type_id is = %r" % new_instance_type_id)
 
         try:
             # Send the resize action to the compute api
             self.compute_api.resize_in_place(context, id, new_instance_type_id['id'])
-        except exception.OutOfInstanceMemory:
+        except exception.OutOfInstanceMemory, e:
+            msg = e.message
+            LOG.debug(msg)
             raise exception.UnprocessableEntity()
-        except nova_exception.CannotResizeToSameSize:
-            msg = "When resizing, instances must change size!"
+        except nova_exception.CannotResizeToSameSize, e:
+            msg = e.message
             raise exception.BadRequest(msg)
 
         return webob.Response(status_int=202)
@@ -263,7 +269,9 @@ class Controller(object):
                 db.instance_update(context, id, {'vm_state': vm_states.ACTIVE,})
 
             compute_response = self.compute_api.get(context, instance_id)
-        except nova_exception.NotFound:
+        except nova_exception.NotFound, e:
+            msg = e.message
+            LOG.debug(msg)
             raise exception.NotFound()
         LOG.debug("server_response - %s", compute_response)
         build_states = [
@@ -350,8 +358,10 @@ class Controller(object):
                               server.wrapped_exc.detail)
                 if isinstance(server, exc.HTTPClientError):
                     LOG.error("a 400 error occurred %s" % server)
-                raise exception.InstanceFault("Could not complete the request."
-                          " Please try again later or contact Customer Support")
+                msg = ("Could not complete the request. Please try again "
+                       "later or contact Customer Support")
+                LOG.error(msg)
+                raise exception.InstanceFault(msg)
             return server
         except (TypeError, AttributeError, KeyError) as e:
             LOG.error(e)
@@ -442,7 +452,9 @@ class Controller(object):
     def _validate_empty_body(body):
         """Check that the body is not empty"""
         if not body:
-            raise exception.BadRequest("The request contains an empty body")
+            msg = "The request contains an empty body"
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
     @staticmethod
     def _validate_volume_size(size):
@@ -451,17 +463,22 @@ class Controller(object):
             volume_size = float(size)
         except (ValueError, TypeError) as err:
             LOG.error(err)
-            raise exception.BadRequest("Required element/key - instance volume "
-                                       "'size' was not specified as a number")
+            msg = ("Required element/key - instance volume"
+                   "'size' was not specified as a number")
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         if int(volume_size) != volume_size or int(volume_size) < 1:
-            raise exception.BadRequest("Volume 'size' needs to be a positive "
-                                       "integer value, %s cannot be accepted."
-                                       % volume_size)
+            msg = ("Volume 'size' needs to be a positive "
+                   "integer value, %s cannot be accepted." % volume_size)
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
         max_size = FLAGS.reddwarf_max_accepted_volume_size
         if int(volume_size) > max_size:
-            raise exception.OverLimit("Volume 'size' cannot exceed maximum "
-                                      "of %d Gb, %s cannot be accepted."
-                                      % (max_size, volume_size))
+            msg = ("Volume 'size' cannot exceed maximum "
+                   "of %d Gb, %s cannot be accepted."
+                   % (max_size, volume_size))
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
     @staticmethod
     def _validate(body):
@@ -518,9 +535,11 @@ class Controller(object):
                                        "specified" % e)
         Controller._validate_volume_size(new_volume_size)
         if int(new_volume_size) <= old_volume_size:
-            raise exception.BadRequest("The new volume 'size' cannot be less "
-                                       "than the current volume size of '%s'"
-                                       % old_volume_size)
+            msg = ("The new volume 'size' cannot be less "
+                   "than the current volume size of '%s'"
+                   % old_volume_size)
+            LOG.debug(msg)
+            raise exception.BadRequest(msg)
 
     @staticmethod
     def _validate_restart_instance(id, instance_state):
